@@ -1,0 +1,113 @@
+{
+    "settings" : {
+        "analysis" : {
+            "filter" : {
+                "indonesian_stop" : {
+                    "type" : "stop",
+                    "stopwords" : "_indonesian"
+                },
+                "indonesian_stemmer" : {
+                    "type" : "stemmer",
+                    "language" : "indonesian"
+                },
+                        "english_stop" : {
+                            "type" : "stop",
+                            "stopwords" : "english"
+                        },
+                        "english_stemmer" : {
+                            "type" : "stemmer",
+                            "language" : "english"
+                        }
+                    },
+                    "analyzer" :{
+                        "indonesian_custom" : {
+                            "tokenizer" : "standard",
+                            "filter" : ["lowercase", "indonesian_stop", "indonesian_stemmer"]
+                        },
+                        "english_custom" : {
+                            "tokenizer" : "standard",
+                            "filter" : ["lowercase", "english_stop", "english_stemmer"]
+                        }
+                    }
+                },
+                "number_of_shards" : 1,
+                "number_of_replicas" : 0
+            },
+            "mappings" : {
+                "id" : {
+                    "type" : "keyword"
+                },
+                "title" : {
+                    "type" : "text",
+                    "analyzer" : "english_custom",
+                    "fields" : {
+                        "indonesian" : {
+                            "type" : "text",
+                            "analyzer" : "indonesian_custom"
+                        },
+                        "keywords" : {
+                            "type" : "keyword"
+                        }
+                    }
+                },
+                "content" : {
+                    "type" : "text",
+                    "analyzer" : "english_custom",
+                    "fields" : {
+                        "indonesian" : {
+                            "type" : "text",
+                            "analyzer" : "indonesian_custom"
+                        }
+                    }
+                },
+                "full_content" : {
+                    "type" : "text",
+                    "analyzer" : "english_custom",
+                    "fields" : {
+                        "indonesian" : {
+                            "type" : "text",
+                            "analyzer" : "indonesian_custom"
+                        }
+                    }
+                },
+                "source" : {
+                    "type" : "keyword"
+                },
+                "category" : {
+                    "type" : "keyword"
+                },
+                "published_date": {
+                    "type": "date",
+                    "format": "strict_date_optional_time||epoch_millis||yyyy-MM-dd HH:mm:ssZZ"
+                },
+                "crawled_date" : {
+                    "type" : "date",
+                    "format" : "strict_date_optional_time||epoch_millis||yyyy-MM-dd HH:mm:ssZZ"
+                },
+                "processed_date" : {
+                    "type" : "date",
+                    "format" : "strict_date_optional_time||epoch_millis||yyyy-MM-dd HH:mm:ssZZ"
+                },
+                "url" : {
+                    "type" : "keyword"
+                },
+                "language" : {
+                    "type" : "keyword"
+                },
+                "region" : {
+                    "type" : "keyword"
+                },
+                "country" : {
+                    "type" : "keyword"
+                },
+                "tags" : {
+                    "type" : "keyword"
+                },
+                "source_type" : {
+                    "type" : "keyword"
+                },
+                "author" : {
+                    "type" : "keyword"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+postgres:
+  host: postgres
+  port: 5432
+  user: airflow
+  password: airflow_11
+  dbname: news
+
+neo4j:
+  uri: bolt://neo4j:7687
+  user: neo4j
+  password: password123

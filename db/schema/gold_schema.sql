@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS gold_data (
+    id SERIAL PRIMARY KEY,
+    silver_id INTEGER REFERENCES silver_data(id),
+    pub_date DATE,
+    source VARCHAR(255),
+    region VARCHAR(100),
+    author VARCHAR(255),
+    topic_name VARCHAR(100),
+    topic_id INTEGER,
+    media_name VARCHAR(100),
+    sentiment_label VARCHAR(20),
+    avg_sentiment_score FLOAT,
+    article_count INTEGER,
+    sentiment_confidence FLOAT,
+    key_entities JSONB,
+    top_persons TEXT[],
+    top_organizations TEXT[],
+    top_locations TEXT[],
+    person_entity_count INTEGER,
+    organization_entity_count INTEGER,
+    location_entity_count INTEGER,
+    processing_date DATE
+);
