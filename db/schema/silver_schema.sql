@@ -19,5 +19,15 @@ CREATE TABLE IF NOT EXISTS silver_data (
     misc_entities TEXT[],
     language_detected VARCHAR(10),
     processing_timestamp TIMESTAMP,
-    enrichment_version VARCHAR(20)
+    enrichment_version VARCHAR(20),
+    content_type VARCHAR(50),
+    quality_score FLOAT,
+    person_entity_count INTEGER DEFAULT 0,
+    organization_entity_count INTEGER DEFAULT 0,
+    location_entity_count INTEGER DEFAULT 0,
+    total_entity_count INTEGER DEFAULT 0,
+    content_richness_score FLOAT DEFAULT 0.0,
+    information_density FLOAT DEFAULT 0.0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

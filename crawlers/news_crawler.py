@@ -4,10 +4,16 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from typing import List, Optional
+import os
+import sys
 
-from news_models import CrawledData
-from base_crawler import BaseCrawler
-from article_checker import ArticleChecker
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+
+from crawlers.news_models import CrawledData
+from crawlers.base_crawler import BaseCrawler
+from crawlers.article_checker import ArticleChecker
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +89,7 @@ class NewsCrawler(BaseCrawler):
 
             text = soup.get_text(separator=' ', strip=True)
             text = re.sub(r'\s+', ' ', text).strip()
+            text = re.sub(r'\s+([.!?])', r'\1', text)
             return text
         except Exception as e:
             logger.warning(f"Error cleaning HTML content: {e}")
@@ -132,6 +139,10 @@ class NewsCrawler(BaseCrawler):
         for selector in content_selectors:
             content_element = soup.select_one(selector)
             if content_element:
+                paragraphs = content_element.find_all('p')
+                if paragraphs:
+                    text = ' '.join([p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 20])
+                    return re.sub(r'\s+', ' ', text).strip()
                 text = content_element.get_text(separator=' ', strip=True)
                 if len(text) > 100:
                     return re.sub(r'\s+', ' ', text).strip()
@@ -148,6 +159,10 @@ class NewsCrawler(BaseCrawler):
         # Last fallback: extract all text
         all_text = soup.get_text(separator=' ', strip=True)
         all_text = re.sub(r'\s+', ' ', all_text).strip()
+        # Remove unwanted text like Advertisement from the extracted text
+        unwanted_phrases = ['Advertisement', 'Ads', 'Sponsored']
+        for phrase in unwanted_phrases:
+            all_text = all_text.replace(phrase, '')
         return all_text + ('...' if len(all_text) > 2000 else '')
 
     # ==========

@@ -11,5 +11,19 @@ CREATE TABLE IF NOT EXISTS bronze_data (
     ingested_at TIMESTAMP,
     cleaned_at TIMESTAMP,
     is_duplicate BOOLEAN,
-    quality_check_status VARCHAR(50)
+    quality_check_status VARCHAR(50),
+    language_detected VARCHAR(10),
+    content_type VARCHAR(50),
+    title_length INTEGER,
+    content_length INTEGER,
+    full_content_length INTEGER,
+    content_truncated BOOLEAN DEFAULT FALSE,
+    title_truncated BOOLEAN DEFAULT FALSE,
+    title_word_count INTEGER,
+    content_word_count INTEGER,
+    readability_score FLOAT,
+    quality_score FLOAT,
+    domain VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

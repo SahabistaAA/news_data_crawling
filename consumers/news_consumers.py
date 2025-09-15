@@ -2,12 +2,14 @@ import os
 import sys
 import json
 import logging
+import logging.config
 from datetime import datetime
 from confluent_kafka import Consumer
 from dateutil import parser
 
 from db.elasticsearch_manager import ElasticsearchManager
 
+logging.config.fileConfig(os.path.join(os.path.dirname(__file__), '../configs/logging.conf'))
 logger = logging.getLogger(__name__)
 
 class NewsConsumer:
@@ -119,17 +121,11 @@ class NewsConsumer:
 
 
 if __name__ == "__main__":
-    # Set up logging to both console and file
+    # Set up logging to both console and file using config file
     os.makedirs('logs', exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),  # Console output
-            logging.FileHandler('logs/news_consumer.log', mode='a')  # File output
-        ]
-    )
+    logging.config.fileConfig(os.path.join(os.path.dirname(__file__), '../configs/logging.conf'))
 
+    logger = logging.getLogger(__name__)
     logger.info("Starting news consumer...")
     logger.info(f"Kafka Broker: {os.getenv('KAFKA_BROKER', 'localhost:9092')}")
     logger.info(f"Topic: {os.getenv('TOPIC_NAME', 'news_topic')}")
