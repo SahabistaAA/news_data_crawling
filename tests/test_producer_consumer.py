@@ -40,7 +40,7 @@ class TestNewsConsumer:
             }
         }
 
-    @patch('news_data_crawling.db.elastic_manager.ElasticsearchManager')
+    @patch('news_data_crawling.db.elasticsearch_manager.ElasticsearchManager')
     @patch('news_data_crawling.consumers.news_consumers.NewsConsumer')
     def test_consumer_initialization(self, mock_consumer, mock_es_manager):
         """Test consumer initialization"""
@@ -100,7 +100,7 @@ class TestNewsConsumer:
         result = self.consumer.normalize_article_dates(article)
         assert "pub_date" not in result["metadata"]
 
-    @patch('news_data_crawling.db.elastic_manager.ElasticsearchManager')
+    @patch('news_data_crawling.db.elasticsearch_manager.ElasticsearchManager')
     @patch('news_data_crawling.consumers.news_consumers.NewsConsumer')
     def test_run_consumer_no_messages(self, mock_consumer, mock_es_manager):
         """Test consumer with no messages"""
@@ -115,7 +115,7 @@ class TestNewsConsumer:
         assert result == []
         mock_consumer_instance.subscribe.assert_called_once()
 
-    @patch('news_data_crawling.db.elastic_manager.ElasticsearchManager')
+    @patch('news_data_crawling.db.elasticsearch_manager.ElasticsearchManager')
     @patch('news_data_crawling.consumers.news_consumers.NewsConsumer')
     def test_run_consumer_with_messages(self, mock_consumer, mock_es_manager):
         """Test consumer with valid messages"""
@@ -162,7 +162,7 @@ class TestNewsProducer:
             }
         ]
 
-    @patch('news_data_crawling.news_producers.news_producer.AdminClient')
+    @patch('news_data_crawling.producers.news_producer.NewsProducer')
     def test_wait_for_kafka_success(self, mock_admin_client):
         """Test successful Kafka connection wait"""
         mock_admin_instance = Mock()
@@ -172,7 +172,7 @@ class TestNewsProducer:
         result = self.producer.wait_for_kafka("localhost:9092", max_retries=1)
         assert result is True
 
-    @patch('data_crawling.producers_consumers.news_producer.AdminClient')
+    @patch('news_data_crawling.producers.news_producer.NewsProducer')
     def test_wait_for_kafka_failure(self, mock_admin_client):
         """Test failed Kafka connection wait"""
         mock_admin_instance = Mock()
@@ -182,7 +182,7 @@ class TestNewsProducer:
         result = self.producer.wait_for_kafka("localhost:9092", max_retries=1)
         assert result is False
 
-    @patch('data_crawling.producers_consumers.news_producer.AdminClient')
+    @patch('news_data_crawling.producers.news_producer.NewsProducer')
     def test_create_topic_if_not_exists(self, mock_admin_client):
         """Test topic creation"""
         mock_admin_instance = Mock()
@@ -200,8 +200,7 @@ class TestNewsProducer:
         result = self.producer.create_topic_if_not_exists("test_topic", "localhost:9092")
         assert result is True
 
-    @patch('data_crawling.producers_consumers.news_producer.Producer')
-    @patch('data_crawling.producers_consumers.news_producer.AdminClient')
+    @patch('news_data_crawling.producers.news_producer.NewsProducer')
     def test_run_producer_with_articles_success(self, mock_admin_client, mock_producer):
         """Test successful article production"""
         # Mock Kafka admin
@@ -217,8 +216,7 @@ class TestNewsProducer:
         assert result == 2  # Both articles should be sent successfully
         assert mock_producer_instance.produce.call_count == 2
 
-    @patch('data_crawling.producers_consumers.news_producer.Producer')
-    @patch('data_crawling.producers_consumers.news_producer.AdminClient')
+    @patch('news_data_crawling.producers.news_producer.NewsProducer')
     def test_run_producer_with_articles_failure(self, mock_admin_client, mock_producer):
         """Test article production with failures"""
         # Mock Kafka admin
