@@ -2,9 +2,29 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements-crawler.txt requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    libpq-dev \
+    curl \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-ml.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./crawler /app/crawler
+# Extra crawler-specific libs
+RUN pip install --no-cache-dir \
+    beautifulsoup4 \
+    lxml \
+    newspaper3k \
+    requests \
+    selenium \
+    webdriver-manager
 
-CMD ["python", "-m", "crawler.main"]
+COPY ./crawlers /app/crawlers
+COPY ./db /app/db
+COPY ./configs /app/configs
+
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+CMD ["python", "-m", "crawlers.news_crawler"]

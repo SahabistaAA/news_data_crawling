@@ -16,7 +16,7 @@ class SilverDB:
     
     def __init__(self):
         self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
+            'host': os.getenv('DB_HOST', 'localhost'),
             'port': os.getenv('DB_PORT', '5432'),
             'database': os.getenv('DB_NAME', 'airflow'),
             'user': os.getenv('DB_USER', 'airflow'),

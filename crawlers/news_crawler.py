@@ -3,7 +3,7 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 import sys
 
@@ -30,36 +30,69 @@ class NewsCrawler(BaseCrawler):
         self.source_country_map = {
             # Indonesian sources
             'Kompas': ("Indonesia", "ID"),
-            'Detik': ("Indonesia", "ID"),
-            'Antara': ("Indonesia", "ID"),
-            'Tempo': ("Indonesia", "ID"),
-            'CNN Indonesia': ("Indonesia", "ID"),
-            'Liputan6': ("Indonesia", "ID"),
-            'Okezone': ("Indonesia", "ID"),
-            'Republika': ("Indonesia", "ID"),
-            'Suara': ("Indonesia", "ID"),
-            'Tribunnews': ("Indonesia", "ID"),
-            'Kontan': ("Indonesia", "ID"),
-            'CNBC Indonesia': ("Indonesia", "ID"),
-            'JawaPos': ("Indonesia", "ID"),
-            'Kumparan': ("Indonesia", "ID"),
-            'Tirto': ("Indonesia", "ID"),
+            # 'Detik': ("Indonesia", "ID"),
+            # 'Antara': ("Indonesia", "ID"),
+            # 'Tempo': ("Indonesia", "ID"),
+            # 'CNN Indonesia': ("Indonesia", "ID"),
+            # 'Liputan6': ("Indonesia", "ID"),
+            # 'Okezone': ("Indonesia", "ID"),
+            # 'Republika': ("Indonesia", "ID"),
+            # 'Suara': ("Indonesia", "ID"),
+            # 'Tribunnews': ("Indonesia", "ID"),
+            # 'Kontan': ("Indonesia", "ID"),
+            # 'CNBC Indonesia': ("Indonesia", "ID"),
+            # 'JawaPos': ("Indonesia", "ID"),
+            # 'Kumparan': ("Indonesia", "ID"),
+            # 'Tirto': ("Indonesia", "ID"),
 
             # Global sources
-            'BBC': ("United Kingdom", "GB"),
-            'CNN': ("United States", "US"),
-            'Reuters': ("United Kingdom", "GB"),
-            'Guardian': ("United Kingdom", "GB"),
-            'Associated Press': ("United States", "US"),
-            'Al Jazeera': ("Qatar", "QA"),
-            'Deutsche Welle': ("Germany", "DE"),
-            'France24': ("France", "FR"),
-            'RT': ("Russia", "RU"),
-            'Sky News': ("United Kingdom", "GB"),
-            'NPR': ("United States", "US"),
-            'ABC News': ("Australia", "AU"),
-            'Washington Post': ("United States", "US"),
+            'BBC': ("United Kingdom", "GB")
+            # 'CNN': ("United States", "US"),
+            # 'Reuters': ("United Kingdom", "GB"),
+            # 'Guardian': ("United Kingdom", "GB"),
+            # 'Associated Press': ("United States", "US"),
+            # 'Al Jazeera': ("Qatar", "QA"),
+            # 'Deutsche Welle': ("Germany", "DE"),
+            # 'France24': ("France", "FR"),
+            # 'RT': ("Russia", "RU"),
+            # 'Sky News': ("United Kingdom", "GB"),
+            # 'NPR': ("United States", "US"),
+            # 'ABC News': ("Australia", "AU"),
+            # 'Washington Post': ("United States", "US"),
         }
+
+        # RSS feeds for sources
+        self.rss_feeds = [
+            # Indonesian sources
+            {"source_name": "Kompas", "feed_url": "https://www.kompas.com/rss", "region": "Indonesia"},
+            # {"source_name": "Detik", "feed_url": "https://rss.detik.com/", "region": "Indonesia"},
+            # {"source_name": "Antara", "feed_url": "https://www.antaranews.com/rss/terkini.xml", "region": "Indonesia"},
+            # {"source_name": "Tempo", "feed_url": "https://rss.tempo.co/", "region": "Indonesia"},
+            # {"source_name": "CNN Indonesia", "feed_url": "https://www.cnnindonesia.com/rss", "region": "Indonesia"},
+            # {"source_name": "Liputan6", "feed_url": "https://www.liputan6.com/rss", "region": "Indonesia"},
+            # {"source_name": "Republika", "feed_url": "https://www.republika.co.id/rss", "region": "Indonesia"},
+            # {"source_name": "Suara", "feed_url": "https://www.suara.com/rss", "region": "Indonesia"},
+            # {"source_name": "Tribunnews", "feed_url": "https://www.tribunnews.com/rss", "region": "Indonesia"},
+            # {"source_name": "Kontan", "feed_url": "https://www.kontan.co.id/rss", "region": "Indonesia"},
+            # {"source_name": "CNBC Indonesia", "feed_url": "https://www.cnbcindonesia.com/rss", "region": "Indonesia"},
+            # {"source_name": "JawaPos", "feed_url": "https://www.jawapos.com/rss", "region": "Indonesia"},
+            # {"source_name": "Tirto", "feed_url": "https://tirto.id/rss", "region": "Indonesia"},
+
+            # Global sources
+            {"source_name": "BBC", "feed_url": "http://feeds.bbci.co.uk/news/rss.xml", "region": "Global"}
+            # {"source_name": "CNN", "feed_url": "http://rss.cnn.com/rss/edition.rss", "region": "Global"},
+            # {"source_name": "Reuters", "feed_url": "https://feeds.reuters.com/Reuters/worldNews", "region": "Global"},
+            # {"source_name": "Guardian", "feed_url": "https://www.theguardian.com/world/rss", "region": "Global"},
+            # {"source_name": "Associated Press", "feed_url": "https://feeds.apnews.com/rss/apf-topnews", "region": "Global"},
+            # {"source_name": "Al Jazeera", "feed_url": "https://www.aljazeera.com/xml/rss/all.xml", "region": "Global"},
+            # {"source_name": "Deutsche Welle", "feed_url": "https://rss.dw.com/xml/rss-en-all", "region": "Global"},
+            # {"source_name": "France24", "feed_url": "https://www.france24.com/en/rss", "region": "Global"},
+            # {"source_name": "RT", "feed_url": "https://www.rt.com/rss/", "region": "Global"},
+            # {"source_name": "Sky News", "feed_url": "https://feeds.skynews.com/feeds/rss/world.xml", "region": "Global"},
+            # {"source_name": "NPR", "feed_url": "https://feeds.npr.org/1001/rss.xml", "region": "Global"},
+            # {"source_name": "ABC News", "feed_url": "https://abcnews.go.com/abcnews/topstories", "region": "Global"},
+            # {"source_name": "Washington Post", "feed_url": "http://feeds.washingtonpost.com/rss/world", "region": "Global"},
+        ]
 
     # ==========
     # Helpers
@@ -233,3 +266,17 @@ class NewsCrawler(BaseCrawler):
         except Exception as e:
             logger.error(f"Error processing article from {source_name}: {e}")
             return None
+
+    def crawl_all_sources(self) -> Dict[str, Any]:
+        """Crawl all configured RSS feeds and return aggregated results."""
+        all_articles = []
+        feed_count = 0
+        for feed in self.rss_feeds:
+            try:
+                articles = self.crawl_rss(feed["source_name"], feed["feed_url"], feed["region"])
+                all_articles.extend(articles)
+                feed_count += 1
+                logger.info(f"Crawled {len(articles)} articles from {feed['source_name']}")
+            except Exception as e:
+                logger.error(f"Failed to crawl {feed['source_name']}: {e}")
+        return {"articles": all_articles, "feed_count": feed_count}
