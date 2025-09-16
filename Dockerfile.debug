@@ -1,0 +1,3 @@
+FROM alpine
+COPY requirements.txt /tmp/
+RUN ls -la /tmp/requirements.txt

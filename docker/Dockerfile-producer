@@ -2,9 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements-producer.txt requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    libpq-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-no-airflow.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./producer /app/producer
+COPY ./producers /app/producers
+COPY ./db /app/db
+COPY ./configs /app/configs
 
-CMD ["python", "-m", "producer.main"]
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+CMD ["python", "-m", "producers.news_producers"]

@@ -1,6 +1,4 @@
-version: "3.9"
-
-services:
+icservices:
   # ======================
   # Databases & Storage
   # ======================
@@ -77,7 +75,7 @@ services:
       retries: 5
 
   neo4j:
-    image: neo4j:5.28.2
+    image: neo4j:5
     container_name: neo4j
     environment:
       - NEO4J_AUTH=neo4j/password
@@ -87,7 +85,7 @@ services:
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: ["executable", "arg"]
+      test: ["CMD-SHELL", "curl -fs http://localhost:7474 || exit 1"]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -128,34 +126,42 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 20000
+
+      # Listeners
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # Replication & topics
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      # AUTO TOPIC CREATION
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_NUM_PARTITIONS: 3
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
-      # PERFORMANCE SETTINGS
+
+      # Performance
       KAFKA_MESSAGE_MAX_BYTES: 150000000
       KAFKA_REPLICA_FETCH_MAX_BYTES: 150000000
       KAFKA_SOCKET_REQUEST_MAX_BYTES: 150000000
       KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
       KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
-      # TIMEOUT SETTINGS - More generous
+
+      # Timeouts
       KAFKA_REQUEST_TIMEOUT_MS: 30000
       KAFKA_METADATA_FETCH_TIMEOUT_MS: 60000
       KAFKA_CONNECTIONS_MAX_IDLE_MS: 600000
-      # LOG SETTINGS
-      KAFKA_LOG_RETENTION_HOURS: 168  # 7 days
-      KAFKA_LOG_SEGMENT_BYTES: 1073741824  # 1GB
-      KAFKA_LOG_RETention_CHECK_INTERVAL_MS: 300000
-      # CONSUMER/PRODUCER SETTINGS
+
+      # Log retention
+      KAFKA_LOG_RETENTION_HOURS: 168         # 7 days
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824    # 1GB
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000   # <-- fixed typo here
+
+      # Consumer/Producer
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      # JVM SETTINGS
+
+      # JVM
       KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
       KAFKA_JVM_PERFORMANCE_OPTS: "-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35"
     volumes:
@@ -196,7 +202,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile-producer
-    container_name: news-producer
+    container_name: producer
     environment:
       KAFKA_BROKER: "kafka:9092"
       TOPIC_NAME: "news_topic"
@@ -205,7 +211,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile-consumer
-    container_name: news-consumer
+    container_name: consumer
     environment:
       KAFKA_BROKER: "kafka:9092"
       TOPIC_NAME: "news_topic"
@@ -216,91 +222,114 @@ services:
   # ======================
   # Airflow (Enhanced from first config)
   # ======================
-  airflow-webserver:
+  airflow-init:
     build:
       context: .
-      dockerfile: docker/Dockerfile-airflow
-    container_name: airflow-webserver
-    environment:
-      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres/airflow
-      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
-      AIRFLOW__CELERY__RESULT_BACKEND: redis://redis:6379/1
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
-      AIRFLOW__WEBSERVER__SECRET_KEY: "your-very-secret-key-here-change-this"
-      PYTHONPATH: "/opt/airflow:/opt/airflow/data_crawling"
-      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
-      KAFKA_BROKER: "kafka:29092"
-      TOPIC_NAME: "news_topic"
-      ELASTICSEARCH_HOST: "http://elasticsearch:9200"
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - airflow_logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-      - .:/opt/airflow/data_crawling
-      - ../data:/opt/airflow/data
-      - ../elasticsearch:/opt/airflow/elasticsearch
-    command: >
-      bash -c "
-      until airflow db check; do
-        echo 'Database not ready yet. Waiting...';
-        sleep 5;
-      done;
-      airflow db upgrade &&
-      airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin123 || true &&
-      airflow webserver
-      "
+      dockerfile: Dockerfile-airflow
+    image: news-data-crawling-airflow:latest
+    container_name: airflow-init
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__WEBSERVER__SECRET_KEY: "dev-secret-key"
+      AIRFLOW__CORE__FERNET_KEY: "fHj2b8yU4WJq1eWk9H1N4Q6H7K1V5wWm6b5T6yA9Y8s="
+      APP_LOGS_DIR: /opt/airflow/logs/modules
+      APP_LOG_LEVEL: INFO
+      APP_LOG_MAX_BYTES: "10485760"
+      APP_LOG_BACKUP_COUNT: "5"
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      "airflow db migrate || airflow db init;
+       airflow users create
+         --username admin
+         --firstname Admin
+         --lastname User
+         --role Admin
+         --email admin@example.com
+         --password admin || true"
+    volumes:
+      - logs:/opt/airflow/logs
+
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile-airflow
+    image: news-data-crawling-airflow:latest
+    container_name: airflow-webserver
+    depends_on:
+      postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
-    restart: unless-stopped
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__WEBSERVER__SECRET_KEY: "dev-secret-key"
+      AIRFLOW__CORE__FERNET_KEY: "fHj2b8yU4WJq1eWk9H1N4Q6H7K1V5wWm6b5T6yA9Y8s="
+      APP_LOGS_DIR: /opt/airflow/logs/modules
+      APP_LOG_LEVEL: INFO
+      APP_LOG_MAX_BYTES: "10485760"
+      APP_LOG_BACKUP_COUNT: "5"
+    command: ["bash", "-lc", "airflow webserver"]
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - logs:/opt/airflow/logs
+      - ./airflow/dags:/opt/airflow/dags
+      - .:/opt/airflow/news_data_crawling
 
   airflow-scheduler:
     build:
       context: .
-      dockerfile: docker/Dockerfile-airflow
+      dockerfile: Dockerfile-airflow
+    image: news-data-crawling-airflow:latest
     container_name: airflow-scheduler
-    environment:
-      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres/airflow
-      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
-      AIRFLOW__CELERY__RESULT_BACKEND: redis://redis:6379/1
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-      KAFKA_BROKER: "kafka:29092"
-      TOPIC_NAME: "news_topic"
-      ELASTICSEARCH_HOST: "http://elasticsearch:9200"
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - airflow_logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-      - .:/opt/airflow/data_crawling
-      - ../data:/opt/airflow/data
-      - ../elasticsearch:/opt/airflow/elasticsearch
-    command: airflow scheduler
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    restart: unless-stopped
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__WEBSERVER__SECRET_KEY: "dev-secret-key"
+      AIRFLOW__CORE__FERNET_KEY: "fHj2b8yU4WJq1eWk9H1N4Q6H7K1V5wWm6b5T6yA9Y8s="
+      APP_LOGS_DIR: /opt/airflow/logs/modules
+      APP_LOG_LEVEL: INFO
+      APP_LOG_MAX_BYTES: "10485760"
+      APP_LOG_BACKUP_COUNT: "5"
+    command: ["bash", "-lc", "airflow scheduler"]
+    volumes:
+      - logs:/opt/airflow/logs
+      - ./airflow/dags:/opt/airflow/dags
+      - .:/opt/airflow/news_data_crawling
 
   airflow-worker:
     build:
       context: .
-      dockerfile: docker/Dockerfile-airflow
+      dockerfile: Dockerfile-airflow
+    image: news-data-crawling-airflow:latest
     container_name: airflow-worker
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
       AIRFLOW__CELERY__RESULT_BACKEND: redis://redis:6379/1
       KAFKA_BROKER: "kafka:29092"
@@ -308,7 +337,7 @@ services:
       ELASTICSEARCH_HOST: "http://elasticsearch:9200"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - airflow_logs:/opt/airflow/logs
+      - logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - .:/opt/airflow/data_crawling
       - ../data:/opt/airflow/data
@@ -326,11 +355,12 @@ services:
   flower:
     build:
       context: .
-      dockerfile: docker/Dockerfile-airflow
+      dockerfile: Dockerfile-airflow
+    image: news-data-crawling-airflow:latest
     container_name: flower
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_11@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
       AIRFLOW__CELERY__RESULT_BACKEND: redis://redis:6379/1
     ports:
@@ -379,4 +409,5 @@ volumes:
   kafka_data:
   zk_data:
   zk_logs:
+  logs:
   airflow_logs:

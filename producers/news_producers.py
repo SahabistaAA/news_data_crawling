@@ -14,7 +14,7 @@ class NewsProducer:
     """Kafka producer for news articles."""
 
     def __init__(self, kafka_broker=None, topic_name=None, raw_path=None):
-        self.kafka_broker = kafka_broker or os.getenv("KAFKA_BROKER", "kafka:9092")
+        self.kafka_broker = kafka_broker or os.getenv("KAFKA_BROKER", "localhost:9092")
         self.topic_name = topic_name or os.getenv("TOPIC_NAME", "news_topic")
         self.raw_path = raw_path or os.getenv("RAW_PATH", "data/raw/news_raw.json")
 

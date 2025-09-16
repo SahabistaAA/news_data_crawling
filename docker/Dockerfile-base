@@ -2,16 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system deps
 RUN apt-get update && apt-get install -y \
     curl wget gnupg default-libmysqlclient-dev build-essential libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
 RUN pip install --upgrade pip
 
-# Copy requirements if exists
-COPY requirements.txt .
-RUN if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+COPY requirements-dev.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app

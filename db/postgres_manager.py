@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 class PostgresManager:
     def __init__(
         self,
-        dbname: str = "postgres",
-        user: str = "postgres",
-        password: str = "postgres",
+        dbname: str = "airflow",
+        user: str = "airflow",
+        password: str = "airflow_11",
         host: str = "localhost",
         port: int = 5432,
     ):
@@ -77,7 +77,7 @@ class PostgresManager:
         CREATE TABLE IF NOT EXISTS {table} (
             id SERIAL PRIMARY KEY,
             title TEXT,
-            url TEXT,
+            url TEXT UNIQUE,
             pub_date TIMESTAMP,
             source TEXT,
             region TEXT,
@@ -117,7 +117,7 @@ class PostgresManager:
         CREATE TABLE IF NOT EXISTS {table} (
             id SERIAL PRIMARY KEY,
             title TEXT,
-            url TEXT,
+            url TEXT UNIQUE,
             pub_date TIMESTAMP,
             source TEXT,
             region TEXT,

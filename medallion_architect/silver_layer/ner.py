@@ -356,7 +356,6 @@ class EntityExtractor:
             processed = []
             
             for entity in entities:
-                # Clean entity text
                 entity_text = entity['text'].strip()
                 
                 # Skip very short entities (less than 2 characters)
@@ -364,7 +363,7 @@ class EntityExtractor:
                     continue
                 
                 # Skip entities that are mostly punctuation
-                if re.match(r'^[^\w\s]*, entity_text):
+                if re.match(r'^[^\w\s]*$', entity_text):
                     continue
                 
                 # Skip common stop words and articles
@@ -376,8 +375,9 @@ class EntityExtractor:
                 entity_text = self._clean_entity_text(entity_text)
                 
                 if entity_text:
-                    entity['text'] = entity_text
-                    processed.append(entity)
+                    entity_copy = entity.copy()
+                    entity_copy['text'] = entity_text
+                    processed.append(entity_copy)
             
             return processed
             
@@ -389,7 +389,7 @@ class EntityExtractor:
         """Clean entity text"""
         try:
             # Remove leading/trailing punctuation except for meaningful ones
-            text = re.sub(r'^[^\w\s]+|[^\w\s]+, '', text)
+            text = re.sub(r'^[^\w\s]+|[^\w\s]+$', '', text)
             
             # Remove excessive whitespace
             text = re.sub(r'\s+', ' ', text).strip()
@@ -400,7 +400,7 @@ class EntityExtractor:
                 words = text.split()
                 cleaned_words = []
                 for word in words:
-                    if len(word) > 1:
+                    if len(word) > 2:
                         cleaned_words.append(word.capitalize())
                     else:
                         cleaned_words.append(word)

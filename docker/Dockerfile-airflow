@@ -1,10 +1,25 @@
-FROM apache/airflow:3.0.6-python3.11
+# ======================
+# Base image
+# ======================
+ARG AIRFLOW_VERSION=3.0.6
+FROM apache/airflow:${AIRFLOW_VERSION}
 
 USER root
-RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 USER airflow
-WORKDIR /opt/airflow
 
-COPY requirements-airflow.txt .
-RUN pip install --no-cache-dir -r requirements-airflow.txt
+# ======================
+# Python Requirements (Airflow only)
+# ======================
+COPY requirements-airflow.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# ======================
+# App logging configuration
+# ======================
